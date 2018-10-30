@@ -18,6 +18,7 @@
 #import "XCEventGenerator.h"
 #import "XCSynthesizedEventRecord.h"
 #import "XCElementSnapshot+FBHitPoint.h"
+#import "XCPointerEvent.h"
 #import "XCPointerEventPath.h"
 #import "XCTRunnerDaemonSession.h"
 
@@ -73,11 +74,13 @@
 - (XCSynthesizedEventRecord *)fb_generateForceTouchEvent:(CGPoint)hitPoint pressure:(double)pressure duration:(double)duration orientation:(UIInterfaceOrientation)orientation
 {
   XCPointerEventPath *eventPath = [[XCPointerEventPath alloc] initForTouchAtPoint:hitPoint offset:0.0];
-  [eventPath pressDownWithPressure:pressure atOffset:0.0];
+  XCPointerEvent *pointerEvent = (XCPointerEvent *)eventPath.pointerEvents[0];
+  pointerEvent.eventType = 1;
+  pointerEvent.pressure = pressure;
+  [eventPath pressDownAtOffset:duration];
   if (![XCTRunnerDaemonSession sharedSession].useLegacyEventCoordinateTransformationPath) {
     orientation = UIInterfaceOrientationPortrait;
   }
-  [eventPath liftUpAtOffset:duration];
   XCSynthesizedEventRecord *event =
   [[XCSynthesizedEventRecord alloc]
    initWithName:[NSString stringWithFormat:@"Force touch on %@", NSStringFromCGPoint(hitPoint)]
