@@ -47,6 +47,9 @@ NS_ASSUME_NONNULL_BEGIN
 /*! Whether element is accessible */
 @property (nonatomic, readonly, getter = isWDAccessible) BOOL wdAccessible;
 
+/*! Whether element hasKeyboardFocus */
+@property (nonatomic, readonly, getter = isWDHasKeyboardFocus) BOOL wdHasKeyboardFocus;
+
 /*! Whether element is an accessibility container (contains children of any depth that are accessible) */
 @property (nonatomic, readonly, getter = isWDAccessibilityContainer) BOOL wdAccessibilityContainer;
 

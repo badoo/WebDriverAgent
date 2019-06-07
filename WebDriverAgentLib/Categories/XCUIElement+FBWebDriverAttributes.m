@@ -150,6 +150,11 @@
   return self.isEnabled;
 }
 
+- (BOOL)isWDHasKeyboardFocus
+{
+  return self.hasKeyboardFocus;
+}
+
 - (NSDictionary *)wdRect
 {
   CGRect frame = self.wdFrame;
