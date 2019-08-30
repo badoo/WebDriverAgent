@@ -145,6 +145,37 @@ static const NSTimeInterval FB_ANIMATION_TIMEOUT = 5.0;
   }
 }
 
+/**
+  Whether 'includingNonModalElements' is available
+
+  @param query The query to check if it has 'includingNonModalElements'
+  @return YES if includingNonModalElements is available in the query
+ */
++ (BOOL)fb_hasIncludingNonModalElements:(XCUIElementQuery *)query
+{
+  static dispatch_once_t hasIncludingNonModalElements;
+  static BOOL result;
+  dispatch_once(&hasIncludingNonModalElements, ^{
+    result = [query respondsToSelector:@selector(includingNonModalElements)];
+  });
+  return result;
+}
+
+/**
+ Returns accessibility element as either rootElementSnapshot by includingNonModalElements or by lastSnapshot
+
+ @return The accessibility element with no modal elements snapshot
+*/
+- (XCAccessibilityElement *)fb_accessibilityElementBySnapshot
+{
+  if ([self.class fb_hasIncludingNonModalElements:self.query]) {
+    // 'self.query.includingNonModalElements.rootElementSnapshot' is faster than 'self.lastSnapshot' on Xcode 11.
+    return self.query.includingNonModalElements.rootElementSnapshot.accessibilityElement;
+  }
+
+  return self.lastSnapshot.accessibilityElement;
+}
+
 - (NSArray *)fb_createAXAttributes: (BOOL)asNumber
 {
   // Names of the properties to load. There won't be lazy loading for missing properties,
@@ -180,15 +211,31 @@ static const NSTimeInterval FB_ANIMATION_TIMEOUT = 5.0;
   static dispatch_once_t oncePropertyNamesToken;
   dispatch_once(&oncePropertyNamesToken, ^{
     propertyNames = @[
-      @"identifier",
-      @"value",
-      @"label",
-      @"frame",
-      @"enabled",
-      @"elementType"
+      @"Identifier",
+      @"Value",
+      @"Iabel",
+      @"Frame",
+      @"Enabled",
+      @"ElementType",
+      @"IsVisible",
+      @"VisibleFrame",
     ];
   });
   return propertyNames;
+}
+
+/**
+ Returns root element query either with includingNonModalElements or no includingNonModalElements
+
+ @return The no modal elements query
+*/
+- (XCUIElementQuery *)fb_withNoModalElementsQuery
+{
+  XCUIElementQuery *query = self.query;
+  if ([self.class fb_hasIncludingNonModalElements:query]) {
+    query = [query includingNonModalElements];
+  }
+  return query;
 }
 
 - (XCElementSnapshot *)fb_lastSnapshotFromQuery

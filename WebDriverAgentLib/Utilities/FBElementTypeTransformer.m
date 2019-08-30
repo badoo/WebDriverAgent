@@ -107,6 +107,7 @@ static NSString const *FB_ELEMENT_TYPE_PREFIX = @"XCUIElementType";
       @80 : @"XCUIElementTypeTab",
       @81 : @"XCUIElementTypeTouchBar",
       @82 : @"XCUIElementTypeStatusItem",
+      @4096 : @"XCUIElementTypeRemotePlaceholder",
       // !!! This mapping should be updated if there are changes after each new XCTest release
       };
     NSMutableDictionary *swappedMapping = [NSMutableDictionary dictionary];

@@ -27,7 +27,7 @@
   if (!self.exists) {
     return [XCElementSnapshot new];
   }
-  
+
   if ([name isEqualToString:FBStringify(XCUIElement, isWDVisible)]
              || [name isEqualToString:FBStringify(XCUIElement, isWDAccessible)]
              || [name isEqualToString:FBStringify(XCUIElement, isWDAccessibilityContainer)]) {
@@ -37,7 +37,7 @@
     // call
     return (self.fb_snapshotWithAttributes ?: self.fb_lastSnapshot) ?: [XCElementSnapshot new];
   }
-  
+
   return self.fb_lastSnapshot ?: [XCElementSnapshot new];
 }
 
@@ -279,6 +279,11 @@ static NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSMutable
 - (BOOL)isWDHasKeyboardFocus
 {
   return self.hasKeyboardFocus;
+}
+
+- (NSString *)wdPlaceholderValue
+{
+  return self.placeholderValue;
 }
 
 @end

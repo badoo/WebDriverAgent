@@ -18,6 +18,7 @@
 @property(readonly) int processIdentifier; // @synthesize processIdentifier=_processIdentifier;
 @property(readonly) const struct __AXUIElement *AXUIElement; // @synthesize AXUIElement=_axElement;
 @property(readonly, getter=isNative) BOOL native;
+@property(readonly) unsigned long long elementType; // @synthesize elementType=_elementType;
 
 + (id)elementWithAXUIElement:(struct __AXUIElement *)arg1;
 + (id)elementWithProcessIdentifier:(int)arg1;
@@ -28,5 +29,6 @@
 - (id)initWithMockProcessIdentifier:(int)arg1 payload:(id)arg2;
 - (id)initWithAXUIElement:(struct __AXUIElement *)arg1;
 - (id)init;
+- (unsigned long) elementType;
 
 @end
