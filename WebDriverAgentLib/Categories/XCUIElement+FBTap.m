@@ -37,18 +37,18 @@
 
 - (BOOL)fb_tapCoordinate:(CGPoint)relativeCoordinate error:(NSError **)error
 {
-//  if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13.0")) {
-//    // Coordinates calculation issues have been fixed
-//    // for different device orientations since Xcode 11
-//    XCUICoordinate *startCoordinate = [self coordinateWithNormalizedOffset:CGVectorMake(0, 0)];
-//    CGVector offset = CGVectorMake(relativeCoordinate.x, relativeCoordinate.y);
-//    XCUICoordinate *dstCoordinate = [startCoordinate coordinateWithOffset:offset];
-//    CGPoint p = [dstCoordinate screenPoint];
-//    NSLog(@"QQQQQ fb_tapCoordinate: point is x: %f, y: %f", p.x, p.y);
-//
-//    [dstCoordinate tap];
-//    return YES;
-//  }
+  if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13.0")) {
+    // Coordinates calculation issues have been fixed
+    // for different device orientations since Xcode 11
+    XCUICoordinate *startCoordinate = [self coordinateWithNormalizedOffset:CGVectorMake(0, 0)];
+    CGVector offset = CGVectorMake(relativeCoordinate.x, relativeCoordinate.y);
+    XCUICoordinate *dstCoordinate = [startCoordinate coordinateWithOffset:offset];
+    CGPoint p = [dstCoordinate screenPoint];
+    NSLog(@"QQQQQ fb_tapCoordinate: point is x: %f, y: %f", p.x, p.y);
+
+    [dstCoordinate tap];
+    return YES;
+  }
 
   NSArray<NSDictionary<NSString *, id> *> *tapGesture =
   @[
