@@ -4,11 +4,154 @@
 //     class-dump is Copyright (C) 1997-1998, 2000-2001, 2004-2013 by Steve Nygard.
 //
 
-#import "NSObject.h"
-
 #import "XCTRunnerAutomationSession.h"
 
 @class NSString, NSXPCConnection;
+@protocol XCTElementSnapshotAttributeDataSource, XCTElementSnapshotProvider;
+
+@class XCTCapabilitiesBuilder;
+
+@protocol XCTCapabilitiesProviding <NSObject>
++ (void)provideCapabilitiesToBuilder:(XCTCapabilitiesBuilder *)arg1;
+@end
+
+@interface XCTCapabilities : NSObject <NSSecureCoding>
+{
+    NSDictionary *_capabilitiesDictionary;
+}
+
++ (id)emptyCapabilities;
++ (_Bool)supportsSecureCoding;
+@property(readonly, copy) NSDictionary *capabilitiesDictionary; // @synthesize capabilitiesDictionary=_capabilitiesDictionary;
+- (id)description;
+- (void)encodeWithCoder:(id)arg1;
+- (_Bool)hasCapability:(id)arg1;
+- (id)initWithCoder:(id)arg1;
+- (id)initWithDictionary:(id)arg1;
+- (unsigned long long)versionForCapability:(id)arg1;
+
+@end
+
+@interface XCTTimeoutControls : NSObject <NSSecureCoding>
+{
+    double _mainThreadResponsivenessTimeout;
+    double _queryExecutionTimeout;
+}
+
++ (double)defaultMainThreadResponsivenessTimeout;
++ (double)defaultQueryExecutionTimeout;
++ (void)setDefaultMainThreadResponsivenessTimeout:(double)arg1;
++ (void)setDefaultQueryExecutionTimeout:(double)arg1;
++ (id)standardTimeoutControls;
++ (_Bool)supportsSecureCoding;
+- (void)encodeWithCoder:(id)arg1;
+- (id)initWithCoder:(id)arg1;
+@property double mainThreadResponsivenessTimeout; // @synthesize mainThreadResponsivenessTimeout=_mainThreadResponsivenessTimeout;
+@property double queryExecutionTimeout; // @synthesize queryExecutionTimeout=_queryExecutionTimeout;
+
+@end
+
+
+@interface XCTElementQuery : NSObject <NSSecureCoding, XCTCapabilitiesProviding>
+{
+    _Bool _isMacOS;
+    _Bool _suppressAttributeKeyPathAnalysis;
+    _Bool _useLegacyElementType;
+    XCAccessibilityElement *_rootElement;
+    unsigned long long _options;
+    XCTTimeoutControls *_timeoutControls;
+    id <XCTElementSnapshotProvider> _snapshotProvider;
+    id <XCTElementSnapshotAttributeDataSource> _elementSnapshotAttributeDataSource;
+    XCElementSnapshot *_rootElementSnapshot;
+    CDUnknownBlockType _evaluationContext;
+    NSArray *_transformers;
+}
+
++ (id)_firstMatchTransformerSubarraysFromArray:(id)arg1 trailingMatchAllTransformers:(id *)arg2;
++ (void)provideCapabilitiesToBuilder:(id)arg1;
++ (_Bool)supportsSecureCoding;
+- (id)_allMatchingSnapshotsForInput:(id)arg1 transformers:(id)arg2 relatedElements:(id *)arg3 noMatchesMessage:(id *)arg4 error:(id *)arg5;
+- (id)_firstMatchingSnapshotForInput:(id)arg1 transformers:(id)arg2 relatedElements:(id *)arg3 noMatchesMessage:(id *)arg4 error:(id *)arg5;
+- (id)_firstMatchingSnapshotForInput:(id)arg1 transformersSubarrays:(id)arg2 relatedElements:(id *)arg3 noMatchesMessage:(id *)arg4 error:(id *)arg5;
+- (id)_rootElementSnapshot:(id *)arg1;
+- (id)_snapshotForElement:(id)arg1 error:(id *)arg2;
+- (_Bool)canBeRemotelyEvaluatedWithCapabilities:(id)arg1;
+@property(readonly, copy) NSString *description;
+@property __weak id <XCTElementSnapshotAttributeDataSource> elementSnapshotAttributeDataSource; // @synthesize elementSnapshotAttributeDataSource=_elementSnapshotAttributeDataSource;
+- (void)encodeWithCoder:(id)arg1;
+@property(copy, nonatomic) CDUnknownBlockType evaluationContext; // @synthesize evaluationContext=_evaluationContext;
+- (_Bool)hasTransformerWithStopsOnFirstMatch;
+@property(readonly) unsigned long long hash;
+- (id)initWithCoder:(id)arg1;
+- (id)initWithRootElement:(id)arg1 transformers:(id)arg2;
+- (id)initWithRootElement:(id)arg1 transformers:(id)arg2 options:(unsigned long long)arg3;
+- (id)initWithRootElement:(id)arg1 transformers:(id)arg2 options:(unsigned long long)arg3 isMacOS:(_Bool)arg4;
+- (id)initWithRootElement:(id)arg1 transformers:(id)arg2 options:(unsigned long long)arg3 isMacOS:(_Bool)arg4 timeoutControls:(id)arg5;
+- (_Bool)isEqual:(id)arg1;
+@property(readonly) _Bool isMacOS; // @synthesize isMacOS=_isMacOS;
+- (id)matchingSnapshotsInSnapshotTree:(id)arg1 relatedElements:(id *)arg2 noMatchesMessage:(id *)arg3 error:(id *)arg4;
+- (id)matchingSnapshotsWithRelatedElements:(id *)arg1 noMatchesMessage:(id *)arg2 error:(id *)arg3;
+@property(readonly) unsigned long long options; // @synthesize options=_options;
+@property(readonly, copy) XCAccessibilityElement *rootElement; // @synthesize rootElement=_rootElement;
+@property(retain) XCElementSnapshot *rootElementSnapshot; // @synthesize rootElementSnapshot=_rootElementSnapshot;
+@property(retain) id <XCTElementSnapshotProvider> snapshotProvider; // @synthesize snapshotProvider=_snapshotProvider;
+@property _Bool suppressAttributeKeyPathAnalysis; // @synthesize suppressAttributeKeyPathAnalysis=_suppressAttributeKeyPathAnalysis;
+@property(retain) XCTTimeoutControls *timeoutControls; // @synthesize timeoutControls=_timeoutControls;
+@property _Bool useLegacyElementType; // @synthesize useLegacyElementType=_useLegacyElementType;
+@property(readonly, copy) NSArray *snapshotAttributes;
+@property(readonly, copy) NSDictionary *snapshotParameters;
+@property(readonly) _Bool supportsAttributeKeyPathAnalysis;
+@property(readonly) _Bool supportsRemoteEvaluation;
+@property(readonly, copy) NSArray *transformers; // @synthesize transformers=_transformers;
+
+// Remaining properties
+@property(readonly, copy) NSString *debugDescription;
+@property(readonly) Class superclass;
+
+@end
+
+@interface XCTElementQueryResults //: NSObject <NSSecureCoding, XCTCapabilitiesProviding, XCTRuntimeIssueContextReportingDelegate>
+{
+    XCElementSnapshot *_rootElement;
+    NSOrderedSet *_matchingElements;
+    NSSet *_remoteElements;
+    NSOrderedSet *_runtimeIssues;
+    NSString *_noMatchesMessage;
+}
+
++ (void)provideCapabilitiesToBuilder:(id)arg1;
++ (_Bool)shouldRuntimeIssueContext:(id)arg1 reportIssue:(id)arg2;
++ (_Bool)supportsSecureCoding;
+- (void)encodeWithCoder:(id)arg1;
+- (id)initWithCoder:(id)arg1;
+- (id)initWithRootElement:(id)arg1 matchingElements:(id)arg2 remoteElements:(id)arg3 runtimeIssues:(id)arg4 noMatchesMessage:(id)arg5;
+@property(readonly, copy) NSOrderedSet *matchingElements; // @synthesize matchingElements=_matchingElements;
+@property(readonly, copy) NSString *noMatchesMessage; // @synthesize noMatchesMessage=_noMatchesMessage;
+@property(readonly, copy) NSSet *remoteElements; // @synthesize remoteElements=_remoteElements;
+- (id)resultsByReplacingRuntimeIssues:(id)arg1;
+@property(readonly) XCElementSnapshot *rootElement; // @synthesize rootElement=_rootElement;
+@property(readonly, copy) NSOrderedSet *runtimeIssues; // @synthesize runtimeIssues=_runtimeIssues;
+
+// Remaining properties
+@property(readonly, copy) NSString *debugDescription;
+@property(readonly, copy) NSString *description;
+@property(readonly) unsigned long long hash;
+@property(readonly) Class superclass;
+
+@end
+
+
+@protocol XCTRunnerAutomationSession
+
+- (XCTElementQueryResults *)matchesForQuery:(XCTElementQuery *)arg1 error:(id *)arg2;
+- (void)notifyWhenAnimationsAreIdle:(void (^)(NSError *))arg1;
+- (void)notifyWhenMainRunLoopIsIdle:(void (^)(NSError *))arg1;
+@property(readonly) XCTCapabilities *remoteInterfaceCapabilities;
+@property(readonly) _Bool supportsAnimationsIdleNotifications;
+@property(readonly) _Bool supportsFetchingAttributesForElement;
+@property(readonly) _Bool supportsMainRunLoopIdleNotifications;
+
+@end
 
 @interface XCTRunnerAutomationSession : NSObject <XCTRunnerAutomationSession>
 {
@@ -17,5 +160,6 @@
 @property NSXPCConnection *connection; // @synthesize connection=_connection;
 
 - (id)initWithEndpoint:(id)arg1;
+
 
 @end

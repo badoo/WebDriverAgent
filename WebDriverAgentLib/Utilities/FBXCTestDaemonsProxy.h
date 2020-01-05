@@ -10,10 +10,12 @@
 #import <XCTest/XCTest.h>
 #import "XCSynthesizedEventRecord.h"
 #import "XCElementSnapshot.h"
+#import "XCTRunnerDaemonSession.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol XCTestManager_ManagerInterface;
+
 
 /**
  Temporary class used to abstract interactions with TestManager daemon between Xcode 8.2.1 and Xcode 8.3-beta
@@ -21,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface FBXCTestDaemonsProxy : NSObject
 
 + (id<XCTestManager_ManagerInterface>)testRunnerProxy;
++ (XCTRunnerDaemonSession *)retrieveXCTRunnerDaemonSession;
 
 #if !TARGET_OS_TV
 + (UIInterfaceOrientation)orientationWithApplication:(XCUIApplication *)application;

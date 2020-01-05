@@ -8,6 +8,7 @@
 #import "XCEventGenerator.h"
 #import <WebDriverAgentLib/CDStructures.h>
 #import <UIKit/UIKit.h>
+#import "XCTRunnerAutomationSession.h"
 
 @class NSMutableDictionary, NSXPCConnection, XCSynthesizedEventRecord;
 @protocol XCTUIApplicationMonitor, XCTAXClient, XCTestManager_ManagerInterface;
@@ -59,6 +60,8 @@
 - (void)startMonitoringApplicationWithBundleID:(id)arg1;
 - (void)requestBackgroundAssertionForPID:(int)arg1 reply:(CDUnknownBlockType)arg2;
 - (void)requestAutomationSessionForTestTargetWithPID:(int)arg1 reply:(CDUnknownBlockType)arg2;
+- (void)requestAutomationSessionForTestTargetWithPID:(int)arg1 preferredBackendPath:(id)arg2 reply:(void (^)(XCTRunnerAutomationSession *, NSError *))arg3;
+
 - (void)requestIDEConnectionSocketForSessionIdentifier:(id)arg1 reply:(CDUnknownBlockType)arg2;
 - (void)_XCT_receivedAccessibilityNotification:(int)arg1 withPayload:(id)arg2;
 - (void)_XCT_applicationWithBundleID:(id)arg1 didUpdatePID:(int)arg2 andState:(unsigned long long)arg3;

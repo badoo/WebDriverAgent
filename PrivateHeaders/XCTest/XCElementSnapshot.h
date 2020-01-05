@@ -100,5 +100,7 @@
 + (id)axAttributesForElementSnapshotKeyPaths:(id)arg1;
 // Since Xcode 10.2
 + (id)axAttributesForElementSnapshotKeyPaths:(id)arg1 isMacOS:(_Bool)arg2;
+// Since Xcode 11.3
++ (id)axAttributesForFaultingPropertiesOnMacOS:(_Bool)arg1;
 
 @end

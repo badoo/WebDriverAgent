@@ -55,6 +55,11 @@ static dispatch_once_t onceTestRunnerDaemonClass;
   }
 }
 
++ (XCTRunnerDaemonSession *)retrieveXCTRunnerDaemonSession
+{
+  return ((XCTRunnerDaemonSession *)[FBXCTRunnerDaemonSessionClass sharedSession]);
+}
+
 #if !TARGET_OS_TV
 + (UIInterfaceOrientation)orientationWithApplication:(XCUIApplication *)application
 {
