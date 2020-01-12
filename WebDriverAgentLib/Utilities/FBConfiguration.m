@@ -39,8 +39,21 @@ static NSUInteger FBScreenshotQuality = 1;
 static NSUInteger FBMjpegScalingFactor = 100;
 static NSTimeInterval FBSnapshotTimeout = 15.;
 static BOOL FBShouldUseFirstMatch = NO;
+static int FBSnapshotRequestMaxDepth = 20;
+static NSString *FBSnapshotMaxDepthKey = @"maxDepth";
+static NSMutableDictionary *FBSnapshotRequestParameters;
 
 @implementation FBConfiguration
+
++ (void)initialize
+{
+  FBSnapshotRequestParameters = [NSMutableDictionary dictionaryWithDictionary:@{
+    @"maxArrayCount": @INT_MAX,
+    @"maxChildren": @INT_MAX,
+    FBSnapshotMaxDepthKey: @20,
+    @"traverseFromParentsToChildren": @1
+  }];
+}
 
 #pragma mark Public
 
@@ -264,6 +277,21 @@ static BOOL FBShouldUseFirstMatch = NO;
   return FBSnapshotTimeout;
 }
 
++ (void)setSnapshotMaxDepth:(int)maxDepth
+{
+  FBSnapshotRequestParameters[FBSnapshotMaxDepthKey] = @(maxDepth);
+}
+
++ (int)snapshotMaxDepth
+{
+  return [FBSnapshotRequestParameters[FBSnapshotMaxDepthKey] intValue];
+}
+
++ (NSDictionary *)snapshotRequestParameters
+{
+  return FBSnapshotRequestParameters;
+}
+
 + (void)setUseFirstMatch:(BOOL)enabled
 {
   FBShouldUseFirstMatch = enabled;
@@ -344,6 +372,22 @@ static BOOL FBShouldUseFirstMatch = NO;
     return NSMakeRange(NSNotFound, 0);
   }
   return NSMakeRange(port, 1);
+}
+
+/**
+ Default parameters for traversing elements tree from parents to children while requesting XCElementSnapshot.
+ The original maxDepth parameter in a dictionary provided by XCAXClient_iOS's method defaultParams is set to INT_MAX.
+ This method returns parameters with maxDepth set to FBDefaultSnapshotRequestMaxDepth
+ @return dictionary with default parameters for element's snapshot request
+*/
++ (NSMutableDictionary *)defaultSnapshotRequestParameters
+{
+  return [NSMutableDictionary dictionaryWithDictionary:@{
+    @"maxArrayCount": @INT_MAX,
+    @"maxChildren": @INT_MAX,
+    @"maxDepth": @(FBSnapshotRequestMaxDepth),
+    @"traverseFromParentsToChildren": @1
+  }];
 }
 
 @end

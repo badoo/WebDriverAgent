@@ -30,6 +30,7 @@ static NSString* const SCREENSHOT_QUALITY = @"screenshotQuality";
 static NSString* const KEYBOARD_AUTOCORRECTION = @"keyboardAutocorrection";
 static NSString* const KEYBOARD_PREDICTION = @"keyboardPrediction";
 static NSString* const SNAPSHOT_TIMEOUT = @"snapshotTimeout";
+static NSString* const SNAPSHOT_MAX_DEPTH = @"snapshotMaxDepth";
 static NSString* const USE_FIRST_MATCH = @"useFirstMatch";
 
 @implementation FBSessionCommands
@@ -224,6 +225,7 @@ static NSString* const USE_FIRST_MATCH = @"useFirstMatch";
       KEYBOARD_AUTOCORRECTION: @([FBConfiguration keyboardAutocorrection]),
       KEYBOARD_PREDICTION: @([FBConfiguration keyboardPrediction]),
       SNAPSHOT_TIMEOUT: @([FBConfiguration snapshotTimeout]),
+      SNAPSHOT_MAX_DEPTH: @([FBConfiguration snapshotMaxDepth]),
       USE_FIRST_MATCH: @([FBConfiguration useFirstMatch]),
     }
   );
@@ -261,6 +263,9 @@ static NSString* const USE_FIRST_MATCH = @"useFirstMatch";
   }
   if ([settings objectForKey:SNAPSHOT_TIMEOUT]) {
     [FBConfiguration setSnapshotTimeout:[[settings objectForKey:SNAPSHOT_TIMEOUT] doubleValue]];
+  }
+  if (nil != [settings objectForKey:SNAPSHOT_MAX_DEPTH]) {
+    [FBConfiguration setSnapshotMaxDepth:[[settings objectForKey:SNAPSHOT_MAX_DEPTH] intValue]];
   }
   if ([settings objectForKey:USE_FIRST_MATCH]) {
     [FBConfiguration setUseFirstMatch:[[settings objectForKey:USE_FIRST_MATCH] boolValue]];
