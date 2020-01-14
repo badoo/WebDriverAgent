@@ -123,10 +123,6 @@ static NSString const *FB_ELEMENT_TYPE_PREFIX = @"XCUIElementType";
   [self createMapping];
   NSNumber *type = StringToElementTypeMapping[typeName];
   if (nil == type) {
-    if ([typeName hasPrefix:(NSString *)FB_ELEMENT_TYPE_PREFIX] && typeName.length > FB_ELEMENT_TYPE_PREFIX.length) {
-      // Consider the element type is something new and has to be added into ElementTypeToStringMapping
-      return XCUIElementTypeOther;
-    }
     NSString *reason = [NSString stringWithFormat:@"Invalid argument for class used '%@'. Did you mean %@%@?", typeName, FB_ELEMENT_TYPE_PREFIX, typeName];
     @throw [NSException exceptionWithName:FBInvalidArgumentException reason:reason userInfo:@{}];
   }
