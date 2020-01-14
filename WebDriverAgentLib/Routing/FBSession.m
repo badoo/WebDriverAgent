@@ -134,14 +134,6 @@ static FBSession *_activeSession;
 - (FBApplication *)activeApplication
 {
   FBApplication *application = [FBApplication fb_activeApplication];
-  FBApplication *testedApplication = nil;
-  if (self.testedApplicationBundleId) {
-    testedApplication = [self.applications objectForKey:self.testedApplicationBundleId];
-  }
-  if (testedApplication && !testedApplication.running) {
-    NSString *description = [NSString stringWithFormat:@"The application under test with bundle id '%@' is not running, possibly crashed", self.testedApplicationBundleId];
-    [[NSException exceptionWithName:FBApplicationCrashedException reason:description userInfo:nil] raise];
-  }
   if (nil != self.alertsMonitor) {
     self.alertsMonitor.application = application;
   }
