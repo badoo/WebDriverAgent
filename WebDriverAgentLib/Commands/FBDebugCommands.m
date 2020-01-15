@@ -21,10 +21,49 @@
 #import "XCTestManager_ManagerInterface-Protocol.h"
 #import "XCAccessibilityElement.h"
 #import "XCUIElement+FBIsVisible.h"
+#import "FBElementTypeTransformer.h"
 
 @implementation FBDebugCommands
+static NSDictionary<NSString *, NSNumber *> *parametersForElementSnapshot;
+static NSDictionary<NSString *, NSNumber *> *parametersForFastElementSnapshot;
+static NSArray *axAttributes;
+static NSArray *axAttributesForParent;
 
 #define DEFAULT_SNAPSHOT_WAIT 10.0
+
++ (void)initialize
+{
+  parametersForElementSnapshot = @{
+    @"maxArrayCount": @INT_MAX,
+    @"maxChildren": @INT_MAX,
+    @"maxDepth": @(50),
+    @"traverseFromParentsToChildren": @(1)
+  };
+
+  parametersForFastElementSnapshot = @{
+    @"maxArrayCount": @INT_MAX,
+    @"maxChildren": @INT_MAX,
+    @"maxDepth": @(1),
+    @"traverseFromParentsToChildren": @(1)
+  };
+
+  NSArray<NSString *> *propertyNames = @[
+    @"identifier",
+    @"value",
+    @"label",
+    @"elementType",
+    @"frame",
+  ];
+  NSSet *attributes = [[XCElementSnapshot class] axAttributesForElementSnapshotKeyPaths:propertyNames isMacOS:NO];
+  axAttributes = [attributes allObjects];
+
+  NSArray<NSString *> *propertyNamesForParent = @[
+      @"identifier"
+    ];
+  NSSet *attributesForParent = [[XCElementSnapshot class] axAttributesForElementSnapshotKeyPaths:propertyNamesForParent isMacOS:NO];
+  axAttributesForParent = [attributesForParent allObjects];
+
+}
 
 #pragma mark - <FBCommandHandler>
 
@@ -40,6 +79,7 @@
     [[FBRoute GET:@"/appStateRunningForeground"].withoutSession respondWithTarget:self action:@selector(handleGetAppStateRunningForegroundCommand:)],
     [[FBRoute GET:@"/appAtPoint"].withoutSession respondWithTarget:self action:@selector(handleGetAppAtPointCommand:)],
     [[FBRoute GET:@"/elementAtPoint"].withoutSession respondWithTarget:self action:@selector(handleGetElementAtPointCommand:)],
+    [[FBRoute GET:@"/elementAtPointFast"].withoutSession respondWithTarget:self action:@selector(handleGetElementAtPointFastCommand:)],
     [[FBRoute GET:@"/remoteWebView"].withoutSession respondWithTarget:self action:@selector(handleGetWebViewCommand:)],
   ];
 }
@@ -192,6 +232,46 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
   return FBResponseWithObject(@{@"element": [self elementTreeWithSnapshot:snap]});
 }
 
++ (id<FBResponsePayload>)handleGetElementAtPointFastCommand:(FBRouteRequest *)request
+{
+  CGFloat x = [request.parameters[@"x"] floatValue];
+  CGFloat y = [request.parameters[@"y"] floatValue];
+  CGPoint screenPoint = CGPointMake(x, y);
+  id<XCTestManager_ManagerInterface> proxy = [FBXCTestDaemonsProxy testRunnerProxy];
+
+  __block XCAccessibilityElement *elementAtPoint;
+  __block NSError *elementRequestError;
+  dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+  [proxy _XCT_requestElementAtPoint:screenPoint
+                              reply:^(XCAccessibilityElement *element, NSError *error) {
+                                if (error == nil) {
+                                  elementAtPoint = element;
+                                } else {
+                                  elementRequestError = error;
+                                }
+                                dispatch_semaphore_signal(sem);
+                              }];
+  dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DEFAULT_SNAPSHOT_WAIT * NSEC_PER_SEC)));
+
+  if (elementRequestError != nil) {
+    return FBResponseWithStatus(FBCommandStatusUnableFindElementError, @{
+      @"error": elementRequestError.localizedDescription
+    });
+  }
+
+  XCElementSnapshot *snap = [self fastElementSnapshot:elementAtPoint];
+
+  NSDictionary *result = @{
+    @"type":  [NSString stringWithFormat:@"%@", [FBElementTypeTransformer stringWithElementType: snap.elementType]],
+    @"value": [NSString stringWithFormat:@"%@", snap.value],
+    @"label": [NSString stringWithFormat:@"%@", snap.label],
+    @"frame": NSStringFromCGRect(snap.frame)
+  };
+
+
+  return FBResponseWithObject(@{@"element": result});
+}
+
 + (NSDictionary *)elementTreeWithSnapshot:(XCElementSnapshot *)rootSnapshot
 {
   NSMutableDictionary<NSString *, NSObject *> *elementDict = [[NSMutableDictionary alloc] init];
@@ -201,6 +281,7 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
   elementDict[@"label"]              = [NSString stringWithFormat:@"%@", rootSnapshot.label];
   elementDict[@"frame"]              = NSStringFromCGRect(rootSnapshot.frame);
   elementDict[@"enabled"]            = [NSString stringWithFormat:@"%@", rootSnapshot.enabled ? @"YES" : @"NO"];
+  elementDict[@"type"]               = [NSString stringWithFormat:@"%@", [FBElementTypeTransformer stringWithElementType: rootSnapshot.elementType]];
 
   NSArray<XCElementSnapshot *> *children = [rootSnapshot children];
   NSMutableArray<NSDictionary *> *childrenDescription = [NSMutableArray arrayWithCapacity:children.count];
@@ -259,29 +340,17 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
   return elementAtPoint;
 }
 
-
 +(void)parentSnapshots:(XCAccessibilityElement *)element
                  proxy:(id<XCTestManager_ManagerInterface>)proxy
              snapshots:(NSMutableArray<XCElementSnapshot *> *)snapshots
 {
-  static dispatch_once_t tAttributes;
-  static NSArray<NSString *> *propertyNames;
-  static NSArray *axAttributes;
-  dispatch_once(&tAttributes, ^{
-    propertyNames = @[
-      @"identifier"
-    ];
-    NSSet *attributes = [[XCElementSnapshot class] axAttributesForElementSnapshotKeyPaths:propertyNames isMacOS:NO];
-    axAttributes = [attributes allObjects];
-  });
-
   __block XCElementSnapshot *snapshotWithAttributes = nil;
   __block NSError *innerError = nil;
   dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
   [proxy _XCT_requestSnapshotForElement:element
-                             attributes:axAttributes
-                             parameters:[self getParametersForElementSnapshot]
+                             attributes:axAttributesForParent
+                             parameters:parametersForElementSnapshot
                                   reply:^(XCElementSnapshot *snapshot, NSError *error) {
                                     if (nil == error) {
                                       snapshotWithAttributes = snapshot;
@@ -315,21 +384,6 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
 
 +(XCElementSnapshot *)elementSnapshot:(XCAccessibilityElement *)element
 {
-    static dispatch_once_t tAttributes;
-    static NSArray<NSString *> *propertyNames;
-    static NSArray *axAttributes;
-    dispatch_once(&tAttributes, ^{
-      propertyNames = @[
-        @"identifier",
-        @"value",
-        @"label",
-        @"elementType",
-        @"frame",
-      ];
-      NSSet *attributes = [[XCElementSnapshot class] axAttributesForElementSnapshotKeyPaths:propertyNames isMacOS:NO];
-      axAttributes = [attributes allObjects];
-    });
-
   __block XCElementSnapshot *snapshotWithAttributes = nil;
   __block NSError *innerError = nil;
   dispatch_semaphore_t sem = dispatch_semaphore_create(0);
@@ -338,7 +392,7 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
 
   [proxy _XCT_requestSnapshotForElement:element
                              attributes:axAttributes
-                             parameters:[self getParametersForElementSnapshot]
+                             parameters:parametersForElementSnapshot
                                   reply:^(XCElementSnapshot *snapshot, NSError *error) {
                                     if (nil == error) {
                                       snapshotWithAttributes = snapshot;
@@ -354,25 +408,31 @@ static NSString *const SOURCE_FORMAT_DESCRIPTION = @"description";
   return snapshotWithAttributes;
 }
 
-+(NSDictionary *)getParametersForElementSnapshot
+
++(XCElementSnapshot *)fastElementSnapshot:(XCAccessibilityElement *)element
 {
-  // Instead of calling [[XCUIDevice.sharedDevice accessibilityInterface] defaultParameters];
-  // create own parameters, as defaultParameters contain way too big numbers
-  // which make WebViews get into Guru-Meditation state and hog CPU and never return from queries
+  __block XCElementSnapshot *snapshotWithAttributes = nil;
+  __block NSError *innerError = nil;
+  dispatch_semaphore_t sem = dispatch_semaphore_create(0);
 
-  static dispatch_once_t tParameters;
-  static NSDictionary<NSString *, NSNumber *> *parameters;
+  id<XCTestManager_ManagerInterface> proxy = [FBXCTestDaemonsProxy testRunnerProxy];
 
-  dispatch_once(&tParameters, ^{
-    parameters = @{
-      @"maxArrayCount": [NSNumber numberWithInt:1024],
-      @"maxChildren": [NSNumber numberWithInt:100],
-      @"maxDepth": [NSNumber numberWithInt:15],
-      @"traverseFromParentsToChildren": [NSNumber numberWithInt:1]
-    };
-  });
+  [proxy _XCT_requestSnapshotForElement:element
+                             attributes:axAttributes
+                             parameters:parametersForFastElementSnapshot
+                                  reply:^(XCElementSnapshot *snapshot, NSError *error) {
+                                    if (nil == error) {
+                                      snapshotWithAttributes = snapshot;
+                                    } else {
+                                      innerError = error;
+                                      NSLog(@"ERROR while getting _XCT_requestSnapshotForElement: %@", error);
+                                    }
+                                    dispatch_semaphore_signal(sem);
+                                  }];
 
-  return parameters;
+  dispatch_semaphore_wait(sem, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(DEFAULT_SNAPSHOT_WAIT * NSEC_PER_SEC)));
+
+  return snapshotWithAttributes;
 }
 
 @end

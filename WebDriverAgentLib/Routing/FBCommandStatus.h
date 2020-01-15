@@ -39,6 +39,7 @@ typedef NS_ENUM(NSUInteger, FBCommandStatus){
     FBCommandStatusMoveTargetOutOfBounds = 34, // Target provided for a move action is out of bounds
     FBCommandStatusInvalidXPathSelector = 51, // Invalid XPath selector
     FBCommandStatusInvalidXPathSelectorReturnType = 52, // Invalid XPath selector return type
+    FBCommandStatusUnableFindElementError = 404, // Not found
     FBCommandStatusMethodNotAllowed = 405, // Method not allowed
     FBCommandStatusRotationNotAllowed = 777, // Rotation not allowed
     FBCommandStatusApplicationDeadlockDetected = 888, // Application deadlock detected
